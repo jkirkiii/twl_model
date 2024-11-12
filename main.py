@@ -1,133 +1,201 @@
 import xarray as xr
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
-def extract_twl_data(file_path, sort_method='yx'):
+def extract_twl_data(file_path, simulation_id):
     """
-    Extract Total Water Levels (TWL) from the specified NetCDF file.
-    Takes the second value of 's1' at each grid cell and processes according to specifications.
+    Extract Total Water Levels (TWL) from a single simulation file,
+    using native Delft3D FM element indexing.
 
     Parameters:
         file_path (str): Path to the SFBD_map.nc file
-        sort_method (str): Sorting method to use ('yx', 'xy', or 'index')
-            - 'yx': Sort by y-coordinate first, then x-coordinate (north-to-south, west-to-east)
-            - 'xy': Sort by x-coordinate first, then y-coordinate (west-to-east, north-to-south)
-            - 'index': Sort by original grid cell index if available
+        simulation_id (int): Identifier for this simulation run
 
     Returns:
-        pandas.DataFrame: DataFrame containing grid coordinates and processed TWL values
+        pandas.DataFrame: DataFrame containing grid coordinates and TWL values
     """
-    # Open the dataset
     ds = xr.open_dataset(file_path)
 
-    # Extract the grid coordinates
+    # Use native element indices
+    native_indices = np.arange(ds.dims['nFlowElem'])
+
+    # Extract coordinates and TWL values
     flow_elem_xcc = ds['FlowElem_xcc'].values
     flow_elem_ycc = ds['FlowElem_ycc'].values
-
-    # Extract the second value of 's1' for each grid cell
-    # The second value corresponds to the 72nd hour/final step
-    twl_values = ds['s1'].isel(time=1).values  # Using index 1 for the second value
+    twl_values = ds['s1'].isel(time=1).values
 
     # Set any negative or very small values to 0
-    # Using a small epsilon to catch values very close to zero (~1e-5)
     twl_values = np.where(twl_values <= 1e-5, 0, twl_values)
 
-    # Create a DataFrame with the results
+    # Create DataFrame with native element indexing
     results_df = pd.DataFrame({
-        'grid_cell_index': np.arange(len(flow_elem_xcc)),  # Add original index
+        'grid_cell_id': native_indices,
         'FlowElem_xcc': flow_elem_xcc,
         'FlowElem_ycc': flow_elem_ycc,
-        'TWL': twl_values
+        'TWL': twl_values,
+        'simulation_id': simulation_id
     })
 
-    # Sort the results based on the specified method
-    if sort_method == 'yx':
-        # Sort north-to-south, then west-to-east
-        results_df = results_df.sort_values(
-            by=['FlowElem_ycc', 'FlowElem_xcc'],
-            ascending=[False, True]
-        )
-    elif sort_method == 'xy':
-        # Sort west-to-east, then north-to-south
-        results_df = results_df.sort_values(
-            by=['FlowElem_xcc', 'FlowElem_ycc'],
-            ascending=[True, False]
-        )
-    elif sort_method == 'index':
-        # Sort by original grid cell index
-        results_df = results_df.sort_values(by='grid_cell_index')
-
-    # Close the dataset
     ds.close()
-
     return results_df
 
 
-def validate_data(df):
+def process_all_simulations(input_dir, output_dir):
     """
-    Validate the extracted data to ensure it meets expectations.
+    Process all simulation files and create ML-ready datasets.
 
     Parameters:
-        df (pandas.DataFrame): The extracted data
+        input_dir (str): Directory containing all .nc files
+        output_dir (str): Directory to save processed data
     """
-    print(f"Total number of grid cells: {len(df)}")
-    print(f"Number of cells with TWL = 0: {(df['TWL'] == 0).sum()}")
-    print(f"TWL range: {df['TWL'].min():.6f} to {df['TWL'].max():.6f}")
-    print("\nCoordinate ranges:")
-    print(f"X: {df['FlowElem_xcc'].min():.1f} to {df['FlowElem_xcc'].max():.1f}")
-    print(f"Y: {df['FlowElem_ycc'].min():.1f} to {df['FlowElem_ycc'].max():.1f}")
-    print("\nSample of the sorted data:")
-    print(df.head())
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # Process first file to get reference grid
+    nc_files = sorted(Path(input_dir).glob('*.nc'))
+    if not nc_files:
+        raise ValueError(f"No .nc files found in {input_dir}")
+
+    print("Processing first file to establish reference grid...")
+    reference_df = extract_twl_data(nc_files[0], 0)
+    reference_coords = reference_df[['grid_cell_id', 'FlowElem_xcc', 'FlowElem_ycc']]
+
+    # Save coordinate reference with additional mesh information
+    save_grid_reference(nc_files[0], reference_coords, f"{output_dir}/grid_reference.csv")
+    print(f"Saved grid reference with {len(reference_coords)} cells")
+
+    # Process all files
+    all_twls = []
+    print(f"\nProcessing {len(nc_files)} simulation files...")
+
+    for i, file_path in enumerate(nc_files):
+        print(f"Processing simulation {i + 1}/{len(nc_files)}: {file_path.name}")
+
+        try:
+            df = extract_twl_data(file_path, i)
+
+            # Verify grid consistency
+            if not validate_grid_consistency(df, reference_df):
+                raise ValueError(f"Grid mismatch in file {file_path.name}")
+
+            # Store TWLs with simulation ID
+            all_twls.append(df[['grid_cell_id', 'TWL', 'simulation_id']])
+
+        except Exception as e:
+            print(f"Error processing {file_path.name}: {str(e)}")
+            continue
+
+    # Combine all TWLs
+    print("\nCombining all simulation results...")
+    combined_twls = pd.concat(all_twls, ignore_index=True)
+
+    # Save in multiple formats for ML processing
+    save_ml_ready_data(combined_twls, output_dir)
+
+    return reference_coords, combined_twls
 
 
-def verify_sorting_consistency(df1, df2):
+def validate_grid_consistency(df1, df2):
     """
-    Verify that two processed files have the same spatial ordering.
-
-    Parameters:
-        df1, df2 (pandas.DataFrame): Two processed datasets to compare
+    Validate that two datasets maintain the same grid structure.
 
     Returns:
-        bool: True if sorting is consistent, False otherwise
+        bool: True if grids match, raises ValueError if they don't
     """
-    coord_match = (
-            df1['FlowElem_xcc'].equals(df2['FlowElem_xcc']) and
-            df1['FlowElem_ycc'].equals(df2['FlowElem_ycc'])
-    )
-    return coord_match
+    coord_match = np.allclose(df1['FlowElem_xcc'], df2['FlowElem_xcc']) and \
+                  np.allclose(df1['FlowElem_ycc'], df2['FlowElem_ycc'])
+
+    if not coord_match:
+        raise ValueError("Grid coordinates don't match between files!")
+
+    index_match = np.array_equal(df1['grid_cell_id'], df2['grid_cell_id'])
+
+    if not index_match:
+        raise ValueError("Grid cell indices don't match between files!")
+
+    return True
 
 
-def save_results(df, output_path):
+def save_grid_reference(file_path, reference_coords, output_path):
     """
-    Save the results to a file.
+    Save the grid reference file with additional mesh information.
 
     Parameters:
-        df (pandas.DataFrame): The data to save
-        output_path (str): Path where to save the results
+        file_path (str): Path to the source .nc file
+        reference_coords (pandas.DataFrame): Basic coordinate reference
+        output_path (str): Where to save the enhanced reference file
     """
-    # Save as CSV with consistent float formatting
-    df.to_csv(output_path, index=False, float_format='%.6f')
-    print(f"\nResults saved to: {output_path}")
+    ds = xr.open_dataset(file_path)
+
+    # Create enhanced grid reference
+    grid_ref = reference_coords.copy()
+
+    # Add useful mesh information
+    grid_ref['x_km'] = grid_ref['FlowElem_xcc'] / 1000  # Convert to km
+    grid_ref['y_km'] = grid_ref['FlowElem_ycc'] / 1000
+    grid_ref['cell_area'] = ds['FlowElem_bac'].values  # Cell areas
+    grid_ref['bed_level'] = ds['FlowElem_bl'].values  # Bed levels
+
+    ds.close()
+
+    grid_ref.to_csv(output_path, index=False)
+    print(f"Enhanced grid reference saved to {output_path}")
+
+
+def save_ml_ready_data(combined_twls, output_dir):
+    """
+    Save the TWL data in multiple formats suitable for ML processing.
+
+    Parameters:
+        combined_twls (pandas.DataFrame): Combined TWL data from all simulations
+        output_dir (str): Directory to save the processed data
+    """
+    # 1. Long format (good for data analysis and some ML frameworks)
+    combined_twls.to_csv(f"{output_dir}/all_twls_long.csv", index=False)
+
+    # 2. Wide format (each row is a grid cell, columns are simulations)
+    twls_wide = combined_twls.pivot(
+        index='grid_cell_id',
+        columns='simulation_id',
+        values='TWL'
+    ).reset_index()
+    twls_wide.columns = ['grid_cell_id'] + [f'sim_{i}' for i in range(len(twls_wide.columns) - 1)]
+    twls_wide.to_csv(f"{output_dir}/all_twls_wide.csv", index=False)
+
+    # 3. NumPy arrays (ready for deep learning frameworks)
+    twls_array = twls_wide.iloc[:, 1:].values  # Exclude grid_cell_id
+    np.save(f"{output_dir}/twls_array.npy", twls_array)
+
+    print("\nSaved data in multiple formats:")
+    print(f"1. Long format: {output_dir}/all_twls_long.csv")
+    print(f"2. Wide format: {output_dir}/all_twls_wide.csv")
+    print(f"3. NumPy array: {output_dir}/twls_array.npy")
+
+    # Print shapes for verification
+    print("\nData shapes:")
+    print(f"Long format: {combined_twls.shape}")
+    print(f"Wide format: {twls_wide.shape}")
+    print(f"NumPy array: {twls_array.shape}")
 
 
 if __name__ == "__main__":
-    # File path - replace with actual path
-    file_path = "Z:\School\Capstone\Data\Result_map\sim_1\SFBD_map.nc"
-    output_path = "twl_results.csv"
-    sort_method = 'yx'  # Change this to 'xy' or 'index' if needed
+    # File paths - replace with actual paths
+    input_dir = "Z:\School\Capstone\Data\Result_map\sim_1"
+    output_dir = "processed_data"
 
     try:
-        # Extract the data
-        print(f"Extracting TWL data using {sort_method} sorting...")
-        results = extract_twl_data(file_path, sort_method=sort_method)
+        reference_coords, combined_twls = process_all_simulations(input_dir, output_dir)
+        print("\nProcessing complete!")
 
-        # Validate the results
-        print("\nValidating extracted data:")
-        validate_data(results)
-
-        # Save the results
-        save_results(results, output_path)
+        # Print some summary statistics
+        print("\nSummary Statistics:")
+        print(f"Total grid cells: {len(reference_coords)}")
+        print(f"Total simulations processed: {len(combined_twls['simulation_id'].unique())}")
+        print(f"\nTWL value ranges:")
+        print(f"Min TWL: {combined_twls['TWL'].min():.3f}")
+        print(f"Max TWL: {combined_twls['TWL'].max():.3f}")
+        print(f"Mean TWL: {combined_twls['TWL'].mean():.3f}")
 
     except Exception as e:
-        print(f"Error processing file: {str(e)}")
+        print(f"Error during processing: {str(e)}")
