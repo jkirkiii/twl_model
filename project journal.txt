@@ -1,0 +1,11 @@
+11/11/24
+Preliminary exploration of simulation outputs 
+    Initially tested extracting TWL of grid cells and sorting by UTM coordinates with grid reference index
+    Discovered element index in output files, updated script to utilize native indices
+    Updated script to output multiple data formats during exploratory phase
+    
+11/13/24
+Updated script to handle multiple .nc files
+    *** Questions:  Relationship between nNetElem, nFlowElem, FlowElem_xcc and FlowElem_ycc?
+                    x/y coordinates are circumcenter?
+                    are the FlowElem grids output in the same order in each simulation?

@@ -1,0 +1,176 @@
+==================================================
+
+Variable name: pM2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [ 77.82991  204.00081   31.994541]
+------------------------------
+
+Variable name: pK1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [315.03027  75.72104  51.1433 ]
+------------------------------
+
+Variable name: pO1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [152.23648 262.3231  259.0659 ]
+------------------------------
+
+Variable name: pS2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [ 43.771408  88.260414 313.0521  ]
+------------------------------
+
+Variable name: pN2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [ 33.08903     4.7626696 155.43173  ]
+------------------------------
+
+Variable name: pP1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [125.17693  94.31963 177.14993]
+------------------------------
+
+Variable name: pSA
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [291.30206 110.44419 334.05475]
+------------------------------
+
+Variable name: pQ1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [195.23965 244.56096 331.33655]
+------------------------------
+
+Variable name: pK2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [107.8264   170.29144   26.334148]
+------------------------------
+
+Variable name: pSSA
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [ 11.802512 198.82118  117.5924  ]
+------------------------------
+
+Variable name: MMSLA
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [-0.03930658 -0.06417717 -0.02426587]
+------------------------------
+
+Variable name: hs1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [3.285917   0.1990968  0.26504663]
+------------------------------
+
+Variable name: tp1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [24.938477  2.011797  2.000188]
+------------------------------
+
+Variable name: dir1
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [312.47635 131.662   311.71564]
+------------------------------
+
+Variable name: hs2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [0.25664365 0.49435887 0.40073442]
+------------------------------
+
+Variable name: tp2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [12.921297 16.446516 16.797136]
+------------------------------
+
+Variable name: dir2
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [186.4093  196.50739 210.5115 ]
+------------------------------
+
+Variable name: hs3
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [2.8550737 1.6082015 3.6759593]
+------------------------------
+
+Variable name: tp3
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [15.479252   9.766943   7.3599663]
+------------------------------
+
+Variable name: dir3
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [313.70306 292.94083 315.52505]
+------------------------------
+
+Variable name: slp
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [101753.54 100990.81 101280.4 ]
+------------------------------
+
+Variable name: wdu
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [ 0.7464317 -3.3584     2.0844042]
+------------------------------
+
+Variable name: wdv
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [0.33892637 9.47937    0.67939657]
+------------------------------
+
+Variable name: qsac
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [570.69543 693.9322  371.6705 ]
+------------------------------
+
+Variable name: qsan
+Type: <class 'numpy.ndarray'>
+Shape: (1000, 1)
+Content type: Numeric array
+First few elements: [367.84872   47.060078  25.467375]
+------------------------------

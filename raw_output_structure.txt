@@ -1,0 +1,560 @@
+File Structure Analysis:
+------------------------
+
+Dimensions:
+nmesh2d_EnclosurePoints: 16731
+nmesh2d_EnclosureInstance: 1
+nmesh2d_EnclosureParts: 50
+nNetNode: 185660
+nNetLink: 362370
+nNetLinkPts: 2
+nNetElem: 179269
+nNetElemMaxNode: 4
+nNetLinkContourPts: 4
+nBndLink: 16689
+nFlowElem: 179269
+nFlowElemContourPts: 16
+nFlowLink: 345843
+nFlowLinkPts: 2
+time: 3
+
+Variables:
+
+mesh2d_enc_x:
+  Shape: (16731,)
+  Dimensions: ('nmesh2d_EnclosurePoints',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate
+    cf_role: geometry_x_node
+
+mesh2d_enc_y:
+  Shape: (16731,)
+  Dimensions: ('nmesh2d_EnclosurePoints',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate
+    cf_role: geometry_y_node
+
+mesh2d_enc_node_count:
+  Shape: (1,)
+  Dimensions: ('nmesh2d_EnclosureInstance',)
+  Attributes:
+    long_name: count of coordinates in each instance geometry
+
+mesh2d_enc_part_node_count:
+  Shape: (50,)
+  Dimensions: ('nmesh2d_EnclosureParts',)
+  Attributes:
+    long_name: count of nodes in each geometry part
+
+mesh2d_enc_interior_ring:
+  Shape: (50,)
+  Dimensions: ('nmesh2d_EnclosureParts',)
+  Attributes:
+    long_name: type of each geometry part
+
+mesh2d_enclosure_container:
+  Shape: ()
+  Dimensions: ()
+  Attributes:
+    geometry_type: multipolygon
+    node_count: mesh2d_enc_node_count
+    node_coordinates: mesh2d_enc_x mesh2d_enc_y
+    part_node_count: mesh2d_enc_part_node_count
+    interior_ring: mesh2d_enc_interior_ring
+
+Mesh2D:
+  Shape: ()
+  Dimensions: ()
+  Attributes:
+    cf_role: mesh_topology
+    node_coordinates: NetNode_x NetNode_y
+    node_dimension: nNetNode
+    edge_node_connectivity: NetLink
+    edge_dimension: nNetLink
+    topology_dimension: 2
+    face_node_connectivity: NetElemNode
+    face_dimension: nNetElem
+
+NetNode_x:
+  Shape: (185660,)
+  Dimensions: ('nNetNode',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate
+
+NetNode_y:
+  Shape: (185660,)
+  Dimensions: ('nNetNode',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate
+
+projected_coordinate_system:
+  Shape: ()
+  Dimensions: ()
+  Attributes:
+    name: Unknown projected
+    epsg: 0
+    grid_mapping_name: Unknown projected
+    longitude_of_prime_meridian: 0.0
+    semi_major_axis: 6378137.0
+    semi_minor_axis: 6356752.314245
+    inverse_flattening: 298.257223563
+    EPSG_code: EPSG:0
+    value: value is equal to EPSG code
+    proj4_params: 
+
+NetNode_z:
+  Shape: (185660,)
+  Dimensions: ('nNetNode',)
+  Attributes:
+    units: m
+    positive: up
+    standard_name: sea_floor_depth
+    long_name: bed level at net nodes (flow element corners)
+    mesh: Mesh2D
+    location: node
+
+NetLink:
+  Shape: (362370, 2)
+  Dimensions: ('nNetLink', 'nNetLinkPts')
+  Attributes:
+    standard_name: netlink
+    long_name: link between two netnodes
+    start_index: 1
+
+NetLinkType:
+  Shape: (362370,)
+  Dimensions: ('nNetLink',)
+  Attributes:
+    long_name: type of netlink
+    valid_range: [1 7]
+    flag_values: [1 2 3 4 5 7]
+    flag_meanings: link_between_1D_nodes link_between_2D_nodes embedded_1D2D_link longitudinal_1D2D_link vertically_stacked_1D2D_link roof_gutter_1D2D_link
+
+NetElemNode:
+  Shape: (179269, 4)
+  Dimensions: ('nNetElem', 'nNetElemMaxNode')
+  Attributes:
+    long_name: mapping from net cell to net nodes (counterclockwise)
+    start_index: 1
+
+NetElemLink:
+  Shape: (179269, 4)
+  Dimensions: ('nNetElem', 'nNetElemMaxNode')
+  Attributes:
+    long_name: mapping from net cell to its net links (counterclockwise)
+    short_name: netcell()%LIN
+
+NetLinkContour_x:
+  Shape: (362370, 4)
+  Dimensions: ('nNetLink', 'nNetLinkContourPts')
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: list of x-contour points of momentum control volume surrounding each net/flow link
+
+NetLinkContour_y:
+  Shape: (362370, 4)
+  Dimensions: ('nNetLink', 'nNetLinkContourPts')
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: list of y-contour points of momentum control volume surrounding each net/flow link
+
+NetLink_xu:
+  Shape: (362370,)
+  Dimensions: ('nNetLink',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate of net link center (velocity point)
+
+NetLink_yu:
+  Shape: (362370,)
+  Dimensions: ('nNetLink',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate of net link center (velocity point)
+
+BndLink:
+  Shape: (16689,)
+  Dimensions: ('nBndLink',)
+  Attributes:
+    long_name: netlinks that compose the net boundary
+
+FlowElem_xcc:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate of flow element circumcenter
+    bounds: FlowElemContour_x
+
+FlowElem_ycc:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate of flow element circumcenter
+    bounds: FlowElemContour_y
+
+FlowElem_zcc:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    standard_name: bed_level
+    long_name: bed level of flow element
+
+FlowElem_bac:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    long_name: flow element area
+    units: m2
+    standard_name: cell_area
+
+FlowElem_xzw:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate of flow element center of mass
+    bounds: FlowElemContour_x
+
+FlowElem_yzw:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate of flow element center of mass
+    bounds: FlowElemContour_y
+
+FlowElemContour_x:
+  Shape: (179269, 16)
+  Dimensions: ('nFlowElem', 'nFlowElemContourPts')
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: list of x-coordinates forming flow element
+
+FlowElemContour_y:
+  Shape: (179269, 16)
+  Dimensions: ('nFlowElem', 'nFlowElemContourPts')
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: list of y-coordinates forming flow element
+
+FlowElem_bl:
+  Shape: (179269,)
+  Dimensions: ('nFlowElem',)
+  Attributes:
+    units: m
+    long_name: Initial bed level at flow element circumcenter
+    grid_mapping: projected_coordinate_system
+
+ElemLink:
+  Shape: (362370, 2)
+  Dimensions: ('nNetLink', 'nNetLinkPts')
+  Attributes:
+    standard_name: elemlink
+    long_name: flow nodes between/next to which link between two netnodes lies
+    start_index: 1
+
+FlowLink:
+  Shape: (345843, 2)
+  Dimensions: ('nFlowLink', 'nFlowLinkPts')
+  Attributes:
+    long_name: link/interface between two flow elements
+
+FlowLinkType:
+  Shape: (345843,)
+  Dimensions: ('nFlowLink',)
+  Attributes:
+    long_name: type of flowlink
+    valid_range: [1 7]
+    flag_values: [1 2 3 4 5 7]
+    flag_meanings: link_between_1D_nodes link_between_2D_nodes embedded_1D2D_link longitudinal_1D2D_link vertically_stacked_1D2D_link roof_gutter_1D2D_link
+
+FlowLink_xu:
+  Shape: (345843,)
+  Dimensions: ('nFlowLink',)
+  Attributes:
+    units: m
+    standard_name: projection_x_coordinate
+    long_name: x-coordinate of flow link center (velocity point)
+
+FlowLink_yu:
+  Shape: (345843,)
+  Dimensions: ('nFlowLink',)
+  Attributes:
+    units: m
+    standard_name: projection_y_coordinate
+    long_name: y-coordinate of flow link center (velocity point)
+
+FlowLink_lonu:
+  Shape: (345843,)
+  Dimensions: ('nFlowLink',)
+  Attributes:
+    units: degrees_east
+    standard_name: longitude
+    long_name: longitude
+
+FlowLink_latu:
+  Shape: (345843,)
+  Dimensions: ('nFlowLink',)
+  Attributes:
+    units: degrees_north
+    standard_name: latitude
+    long_name: latitude
+
+time:
+  Shape: (3,)
+  Dimensions: ('time',)
+  Attributes:
+    standard_name: time
+
+timestep:
+  Shape: (3,)
+  Dimensions: ('time',)
+  Attributes:
+    standard_name: timestep
+
+s1:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: sea_surface_height
+    long_name: water level
+    units: m
+    grid_mapping: projected_coordinate_system
+
+s0:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: sea_surface_height
+    long_name: water level at previous timestep
+    units: m
+    grid_mapping: projected_coordinate_system
+
+waterdepth:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    long_name: water depth
+    units: m
+    grid_mapping: projected_coordinate_system
+
+numlimdt:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    long_name: number of times flow element was Courant limiting
+    units: 1
+    grid_mapping: projected_coordinate_system
+
+taus:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: taucurrent
+    long_name: taucurrent in flow element
+    units: N m-2
+    grid_mapping: projected_coordinate_system
+
+unorm:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: normal component of sea_water_speed
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+u0:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: normal component of sea_water_speed at previous timestep
+    units: m s-1
+
+q1:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: flow flux
+    units: m3 s-1
+
+viu:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: horizontal viscosity
+    units: m2 s-1
+
+diu:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: horizontal diffusivity
+    units: m2 s-1
+
+ucx:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: sea_water_x_velocity
+    long_name: Eulerian velocity on flow element center, x-component
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+ucy:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: sea_water_y_velocity
+    long_name: Eulerian velocity on flow element center, y-component
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+czs:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    long_name: Chezy roughness
+    units: m0.5s-1
+
+czu:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: Chezy roughness on flow links
+    units: m0.5s-1
+
+Patm:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    long_name: Atmospheric Pressure
+    units: N m-2
+    grid_mapping: projected_coordinate_system
+
+windx:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: x_wind
+    long_name: velocity of air on flow element center, x-component
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+windy:
+  Shape: (3, 179269)
+  Dimensions: ('time', 'nFlowElem')
+  Attributes:
+    standard_name: y_wind
+    long_name: velocity of air on flow element center, y-component
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+windxu:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: velocity of air on flow links, x-component
+    standard_name: x_velocity_wind
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+windyu:
+  Shape: (3, 345843)
+  Dimensions: ('time', 'nFlowLink')
+  Attributes:
+    long_name: velocity of air on flow links, y-component
+    standard_name: y_velocity_wind
+    units: m s-1
+    grid_mapping: projected_coordinate_system
+
+Extracting data...
+Available variables in dataset:
+mesh2d_enc_x: ('nmesh2d_EnclosurePoints',)
+mesh2d_enc_y: ('nmesh2d_EnclosurePoints',)
+mesh2d_enc_node_count: ('nmesh2d_EnclosureInstance',)
+mesh2d_enc_part_node_count: ('nmesh2d_EnclosureParts',)
+mesh2d_enc_interior_ring: ('nmesh2d_EnclosureParts',)
+mesh2d_enclosure_container: ()
+Mesh2D: ()
+NetNode_x: ('nNetNode',)
+NetNode_y: ('nNetNode',)
+projected_coordinate_system: ()
+NetNode_z: ('nNetNode',)
+NetLink: ('nNetLink', 'nNetLinkPts')
+NetLinkType: ('nNetLink',)
+NetElemNode: ('nNetElem', 'nNetElemMaxNode')
+NetElemLink: ('nNetElem', 'nNetElemMaxNode')
+NetLinkContour_x: ('nNetLink', 'nNetLinkContourPts')
+NetLinkContour_y: ('nNetLink', 'nNetLinkContourPts')
+NetLink_xu: ('nNetLink',)
+NetLink_yu: ('nNetLink',)
+BndLink: ('nBndLink',)
+FlowElem_xcc: ('nFlowElem',)
+FlowElem_ycc: ('nFlowElem',)
+FlowElem_zcc: ('nFlowElem',)
+FlowElem_bac: ('nFlowElem',)
+FlowElem_xzw: ('nFlowElem',)
+FlowElem_yzw: ('nFlowElem',)
+FlowElemContour_x: ('nFlowElem', 'nFlowElemContourPts')
+FlowElemContour_y: ('nFlowElem', 'nFlowElemContourPts')
+FlowElem_bl: ('nFlowElem',)
+ElemLink: ('nNetLink', 'nNetLinkPts')
+FlowLink: ('nFlowLink', 'nFlowLinkPts')
+FlowLinkType: ('nFlowLink',)
+FlowLink_xu: ('nFlowLink',)
+FlowLink_yu: ('nFlowLink',)
+FlowLink_lonu: ('nFlowLink',)
+FlowLink_latu: ('nFlowLink',)
+time: ('time',)
+timestep: ('time',)
+s1: ('time', 'nFlowElem')
+s0: ('time', 'nFlowElem')
+waterdepth: ('time', 'nFlowElem')
+numlimdt: ('time', 'nFlowElem')
+taus: ('time', 'nFlowElem')
+unorm: ('time', 'nFlowLink')
+u0: ('time', 'nFlowLink')
+q1: ('time', 'nFlowLink')
+viu: ('time', 'nFlowLink')
+diu: ('time', 'nFlowLink')
+ucx: ('time', 'nFlowElem')
+ucy: ('time', 'nFlowElem')
+czs: ('time', 'nFlowElem')
+czu: ('time', 'nFlowLink')
+Patm: ('time', 'nFlowElem')
+windx: ('time', 'nFlowElem')
+windy: ('time', 'nFlowElem')
+windxu: ('time', 'nFlowLink')
+windyu: ('time', 'nFlowLink')
+
+Warning: No native grid cell indexing found.
+Creating grid_cell_id based on sorted coordinate position.
+Please verify if this is appropriate for your use case.
+
+Sample of extracted data:
+         FlowElem_xcc  FlowElem_ycc       TWL  simulation_id  grid_cell_id
+156264  618297.624917  4.291484e+06  7.715833              0             0
+156268  618218.277422  4.291483e+06  7.851081              0             1
+156261  618373.663654  4.291480e+06  7.590000              0             2
+156273  618138.644203  4.291477e+06  8.210930              0             3
+156259  618444.837444  4.291475e+06  7.590000              0             4

@@ -44,56 +44,104 @@ def extract_twl_data(file_path, simulation_id):
 
 def process_all_simulations(input_dir, output_dir):
     """
-    Process all simulation files and create ML-ready datasets.
-
-    Parameters:
-        input_dir (str): Directory containing all .nc files
-        output_dir (str): Directory to save processed data
+    Process all simulation files with optimized memory usage and faster combination.
+    Directory structure: input_dir/sim_n/SFBD_map.nc
     """
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    # Process first file to get reference grid
-    nc_files = sorted(Path(input_dir).glob('*.nc'))
-    if not nc_files:
-        raise ValueError(f"No .nc files found in {input_dir}")
+    # Get list of all simulation folders
+    sim_folders = sorted(
+        [f for f in Path(input_dir).iterdir() if f.is_dir() and f.name.startswith('sim_')],
+        key=lambda x: int(x.name.split('_')[1])
+    )
 
-    print("Processing first file to establish reference grid...")
-    reference_df = extract_twl_data(nc_files[0], 0)
+    if not sim_folders:
+        raise ValueError(f"No simulation folders found in {input_dir}")
+
+    # Process first file to get reference grid
+    first_file = sim_folders[0] / 'SFBD_map.nc'
+    print(f"Processing first file to establish reference grid: {first_file}")
+    reference_df = extract_twl_data(first_file, 0)
     reference_coords = reference_df[['grid_cell_id', 'FlowElem_xcc', 'FlowElem_ycc']]
 
-    # Save coordinate reference with additional mesh information
-    save_grid_reference(nc_files[0], reference_coords, f"{output_dir}/grid_reference.csv")
+    # Save coordinate reference
+    save_grid_reference(first_file, reference_coords, f"{output_dir}/grid_reference.csv")
     print(f"Saved grid reference with {len(reference_coords)} cells")
 
-    # Process all files
-    all_twls = []
-    print(f"\nProcessing {len(nc_files)} simulation files...")
+    # Pre-allocate numpy array for all TWL values
+    n_cells = len(reference_coords)
+    n_sims = len(sim_folders)
+    all_twls = np.zeros((n_cells, n_sims))
 
-    for i, file_path in enumerate(nc_files):
-        print(f"Processing simulation {i + 1}/{len(nc_files)}: {file_path.name}")
+    print(f"\nProcessing {n_sims} simulation files...")
+
+    # Process all files
+    for i, sim_folder in enumerate(sim_folders):
+        nc_file = sim_folder / 'SFBD_map.nc'
+        sim_number = int(sim_folder.name.split('_')[1])
+        print(f"Processing simulation {sim_number}/750: {nc_file}")
 
         try:
-            df = extract_twl_data(file_path, i)
+            df = extract_twl_data(nc_file, sim_number - 1)
 
             # Verify grid consistency
             if not validate_grid_consistency(df, reference_df):
-                raise ValueError(f"Grid mismatch in file {file_path.name}")
+                raise ValueError(f"Grid mismatch in file {nc_file}")
 
-            # Store TWLs with simulation ID
-            all_twls.append(df[['grid_cell_id', 'TWL', 'simulation_id']])
+            # Store TWLs directly in the pre-allocated array
+            all_twls[:, i] = df['TWL'].values
 
         except Exception as e:
-            print(f"Error processing {file_path.name}: {str(e)}")
+            print(f"Error processing {nc_file}: {str(e)}")
             continue
 
-    # Combine all TWLs
-    print("\nCombining all simulation results...")
-    combined_twls = pd.concat(all_twls, ignore_index=True)
+    print("\nSaving results in multiple formats...")
 
-    # Save in multiple formats for ML processing
-    save_ml_ready_data(combined_twls, output_dir)
+    # 1. Save the numpy array directly
+    np.save(f"{output_dir}/twls_array.npy", all_twls)
 
-    return reference_coords, combined_twls
+    # 2. Create and save wide format (more memory efficient than previous approach)
+    sim_columns = [f'sim_{i}' for i in range(n_sims)]
+    chunks = []
+    chunk_size = 10000  # Adjust based on available memory
+
+    for i in range(0, n_cells, chunk_size):
+        end_idx = min(i + chunk_size, n_cells)
+        chunk_df = pd.DataFrame(
+            all_twls[i:end_idx, :],
+            columns=sim_columns,
+            index=reference_coords['grid_cell_id'][i:end_idx]
+        )
+        chunk_df.index.name = 'grid_cell_id'
+        chunks.append(chunk_df)
+
+    # Save wide format in chunks
+    first_chunk = True
+    for chunk in chunks:
+        mode = 'w' if first_chunk else 'a'
+        header = first_chunk
+        chunk.to_csv(f"{output_dir}/all_twls_wide.csv", mode=mode, header=header)
+        first_chunk = False
+
+    # 3. Create and save long format efficiently
+    print("\nCreating long format file...")
+    with open(f"{output_dir}/all_twls_long.csv", 'w', newline='') as f:
+        f.write('grid_cell_id,TWL,simulation_id\n')
+        for cell_id in range(n_cells):
+            if cell_id % 10000 == 0:
+                print(f"Processing cell {cell_id}/{n_cells} for long format...")
+            for sim_id in range(n_sims):
+                f.write(f"{cell_id},{all_twls[cell_id, sim_id]},{sim_id}\n")
+
+    print("\nSummary Statistics:")
+    print(f"Total grid cells: {n_cells}")
+    print(f"Total simulations processed: {n_sims}")
+    print(f"\nTWL value ranges:")
+    print(f"Min TWL: {np.min(all_twls):.3f}")
+    print(f"Max TWL: {np.max(all_twls):.3f}")
+    print(f"Mean TWL: {np.mean(all_twls):.3f}")
+
+    return reference_coords, all_twls
 
 
 def validate_grid_consistency(df1, df2):
@@ -180,9 +228,9 @@ def save_ml_ready_data(combined_twls, output_dir):
 
 
 if __name__ == "__main__":
-    # File paths - replace with actual paths
-    input_dir = "Z:\School\Capstone\Data\Result_map\sim_1"
-    output_dir = "processed_data"
+    # Update paths for your directory structure
+    input_dir = r"Z:\School\Capstone\Data\Result_map"
+    output_dir = r"Z:\School\Capstone\twl_model\processed_data"  # Adjust as needed
 
     try:
         reference_coords, combined_twls = process_all_simulations(input_dir, output_dir)
