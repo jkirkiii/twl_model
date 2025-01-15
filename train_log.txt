@@ -1,0 +1,101 @@
+Training started at 2025-01-14 18:46:49.173648
+--------------------------------------------------
+Epoch [10/1500], Train Loss: 0.4317, Val Loss: 0.2036, Time: 0.80s
+Epoch [20/1500], Train Loss: 0.3568, Val Loss: 0.1647, Time: 0.80s
+Epoch [30/1500], Train Loss: 0.2820, Val Loss: 0.1222, Time: 0.79s
+Epoch [40/1500], Train Loss: 0.2340, Val Loss: 0.1089, Time: 0.81s
+Epoch [50/1500], Train Loss: 0.2024, Val Loss: 0.0868, Time: 0.80s
+Epoch [60/1500], Train Loss: 0.1732, Val Loss: 0.1074, Time: 0.80s
+Epoch [70/1500], Train Loss: 0.1774, Val Loss: 0.1225, Time: 0.80s
+Epoch [80/1500], Train Loss: 0.1553, Val Loss: 0.0717, Time: 0.80s
+Epoch [90/1500], Train Loss: 0.1408, Val Loss: 0.0679, Time: 0.80s
+Epoch [100/1500], Train Loss: 0.1467, Val Loss: 0.0919, Time: 0.79s
+Epoch [110/1500], Train Loss: 0.1366, Val Loss: 0.0690, Time: 0.82s
+Epoch [120/1500], Train Loss: 0.1449, Val Loss: 0.0809, Time: 0.79s
+Epoch [130/1500], Train Loss: 0.1340, Val Loss: 0.0790, Time: 0.79s
+Epoch [140/1500], Train Loss: 0.1297, Val Loss: 0.0653, Time: 0.80s
+Epoch [150/1500], Train Loss: 0.1370, Val Loss: 0.0702, Time: 0.83s
+Epoch [160/1500], Train Loss: 0.1134, Val Loss: 0.0593, Time: 0.79s
+Epoch [170/1500], Train Loss: 0.1163, Val Loss: 0.0661, Time: 0.79s
+Epoch [180/1500], Train Loss: 0.1245, Val Loss: 0.0713, Time: 0.79s
+Epoch [190/1500], Train Loss: 0.1202, Val Loss: 0.0666, Time: 0.79s
+Epoch [200/1500], Train Loss: 0.1145, Val Loss: 0.0691, Time: 0.79s
+Epoch [210/1500], Train Loss: 0.1101, Val Loss: 0.0633, Time: 0.79s
+Epoch [220/1500], Train Loss: 0.1129, Val Loss: 0.0703, Time: 0.79s
+Epoch [230/1500], Train Loss: 0.1080, Val Loss: 0.0834, Time: 0.80s
+Epoch [240/1500], Train Loss: 0.1061, Val Loss: 0.0631, Time: 0.79s
+Epoch [250/1500], Train Loss: 0.1082, Val Loss: 0.0728, Time: 0.80s
+Epoch [260/1500], Train Loss: 0.1053, Val Loss: 0.0849, Time: 0.79s
+Epoch [270/1500], Train Loss: 0.1380, Val Loss: 0.0865, Time: 0.82s
+Epoch [280/1500], Train Loss: 0.0948, Val Loss: 0.0672, Time: 0.80s
+Epoch [290/1500], Train Loss: 0.0929, Val Loss: 0.0681, Time: 0.79s
+Epoch [300/1500], Train Loss: 0.1057, Val Loss: 0.0882, Time: 0.79s
+Epoch [310/1500], Train Loss: 0.0956, Val Loss: 0.0700, Time: 0.79s
+Epoch [320/1500], Train Loss: 0.0889, Val Loss: 0.0654, Time: 0.79s
+Epoch [330/1500], Train Loss: 0.0858, Val Loss: 0.0693, Time: 0.80s
+Epoch [340/1500], Train Loss: 0.0982, Val Loss: 0.0691, Time: 0.80s
+Epoch [350/1500], Train Loss: 0.0958, Val Loss: 0.0729, Time: 0.80s
+Epoch [360/1500], Train Loss: 0.0878, Val Loss: 0.0707, Time: 0.80s
+Early stopping triggered at epoch 359
+
+Training completed at 2025-01-14 18:51:37.775907
+Total training time: 287.49 seconds
+Average epoch time: 0.80 seconds
+Number of epochs completed: 360
+Loaded input data with shape: (750, 25)
+Loaded TWL data with shape: (750, 179269)
+
+================================================================================
+Training started at 2025-01-14 18:59:40.496445
+--------------------------------------------------
+Epoch [10/1500], Train Loss: 0.5664, Val Loss: 0.2207, Time: 0.79s
+Epoch [20/1500], Train Loss: 0.3595, Val Loss: 0.1614, Time: 0.79s
+Epoch [30/1500], Train Loss: 0.3034, Val Loss: 0.2043, Time: 0.80s
+Epoch [40/1500], Train Loss: 0.2478, Val Loss: 0.1177, Time: 0.79s
+Epoch [50/1500], Train Loss: 0.2061, Val Loss: 0.0982, Time: 0.79s
+Epoch [60/1500], Train Loss: 0.1730, Val Loss: 0.0768, Time: 0.80s
+Epoch [70/1500], Train Loss: 0.1677, Val Loss: 0.0986, Time: 0.80s
+Epoch [80/1500], Train Loss: 0.1550, Val Loss: 0.0699, Time: 0.79s
+Epoch [90/1500], Train Loss: 0.1387, Val Loss: 0.0685, Time: 0.80s
+Epoch [100/1500], Train Loss: 0.1620, Val Loss: 0.0841, Time: 0.81s
+Epoch [110/1500], Train Loss: 0.1421, Val Loss: 0.0701, Time: 0.79s
+Epoch [120/1500], Train Loss: 0.1312, Val Loss: 0.0646, Time: 0.79s
+Epoch [130/1500], Train Loss: 0.1225, Val Loss: 0.0789, Time: 0.80s
+Epoch [140/1500], Train Loss: 0.1288, Val Loss: 0.0575, Time: 0.79s
+Epoch [150/1500], Train Loss: 0.1253, Val Loss: 0.0624, Time: 0.80s
+Epoch [160/1500], Train Loss: 0.1231, Val Loss: 0.0768, Time: 0.80s
+Epoch [170/1500], Train Loss: 0.1250, Val Loss: 0.0686, Time: 0.80s
+Epoch [180/1500], Train Loss: 0.1186, Val Loss: 0.0983, Time: 0.80s
+Epoch [190/1500], Train Loss: 0.1115, Val Loss: 0.0561, Time: 0.80s
+Epoch [200/1500], Train Loss: 0.1227, Val Loss: 0.0669, Time: 0.80s
+Epoch [210/1500], Train Loss: 0.1174, Val Loss: 0.0619, Time: 0.81s
+Epoch [220/1500], Train Loss: 0.1228, Val Loss: 0.0749, Time: 0.80s
+Epoch [230/1500], Train Loss: 0.1050, Val Loss: 0.0663, Time: 0.79s
+Epoch [240/1500], Train Loss: 0.1075, Val Loss: 0.0729, Time: 0.83s
+Epoch [250/1500], Train Loss: 0.1043, Val Loss: 0.0672, Time: 0.82s
+Epoch [260/1500], Train Loss: 0.1156, Val Loss: 0.0665, Time: 0.79s
+Epoch [270/1500], Train Loss: 0.0957, Val Loss: 0.0700, Time: 0.80s
+Epoch [280/1500], Train Loss: 0.0987, Val Loss: 0.0663, Time: 0.83s
+Epoch [290/1500], Train Loss: 0.0922, Val Loss: 0.0593, Time: 0.79s
+Epoch [300/1500], Train Loss: 0.1000, Val Loss: 0.0689, Time: 0.79s
+Epoch [310/1500], Train Loss: 0.0980, Val Loss: 0.0691, Time: 0.79s
+Epoch [320/1500], Train Loss: 0.0937, Val Loss: 0.0679, Time: 0.80s
+Epoch [330/1500], Train Loss: 0.0844, Val Loss: 0.0587, Time: 0.79s
+Epoch [340/1500], Train Loss: 0.0870, Val Loss: 0.0626, Time: 0.79s
+Epoch [350/1500], Train Loss: 0.0995, Val Loss: 0.0881, Time: 0.79s
+Epoch [360/1500], Train Loss: 0.0891, Val Loss: 0.0598, Time: 0.81s
+Epoch [370/1500], Train Loss: 0.0806, Val Loss: 0.0606, Time: 0.80s
+Epoch [380/1500], Train Loss: 0.0848, Val Loss: 0.0647, Time: 0.79s
+Epoch [390/1500], Train Loss: 0.0805, Val Loss: 0.0697, Time: 0.79s
+Early stopping triggered at epoch 389
+
+Training completed at 2025-01-14 19:04:53.574065
+Total training time: 05:12
+Average epoch time: 0.80 seconds
+Number of epochs completed: 390
+
+Test Results:
+--------------------
+Test Loss: 0.0872
+Test RMSE: 0.2953
+--------------------

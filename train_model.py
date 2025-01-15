@@ -87,6 +87,16 @@ def prepare_data(X, y, train_size=0.8, val_size=0.1, batch_size=32):
 def train_model(model, train_loader, val_loader, num_epochs=1500,
                 learning_rate=0.01, device=None):
     """Train the neural network with early stopping and learning rate scheduling"""
+    import time
+    from datetime import datetime
+
+    # Set up logging with append mode
+    log_file = 'train_log.txt'
+    with open(log_file, 'a') as f:
+        f.write("\n" + "=" * 80 + "\n")
+        f.write(f"Training started at {datetime.now()}\n")
+        f.write("-" * 50 + "\n")
+
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
@@ -100,9 +110,18 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
 
     train_losses = []
     val_losses = []
+    epoch_times = []
+    training_start_time = time.time()
+
+    def log_message(message):
+        print(message)
+        with open(log_file, 'a') as f:
+            f.write(message + '\n')
 
     for epoch in range(num_epochs):
-        # Train
+        epoch_start_time = time.time()
+
+        # Training phase
         model.train()
         train_loss = 0.0
         for batch in train_loader:
@@ -117,7 +136,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
 
             train_loss += loss.item()
 
-        # Validate
+        # Validation phase
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -127,9 +146,11 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
                 outputs = model(features)
                 val_loss += criterion(outputs, targets).item()
 
-        # Calculate average losses
+        # Calculate average losses and timing
         train_loss = train_loss / len(train_loader)
         val_loss = val_loss / len(val_loader)
+        epoch_time = time.time() - epoch_start_time
+        epoch_times.append(epoch_time)
 
         train_losses.append(train_loss)
         val_losses.append(val_loss)
@@ -139,13 +160,29 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
 
         # Early stopping check
         early_stopping(val_loss)
-        if early_stopping.early_stop:
-            print(f"Early stopping triggered at epoch {epoch}")
-            break
 
         if (epoch + 1) % 10 == 0:
-            print(f'Epoch [{epoch + 1}/{num_epochs}], '
-                  f'Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}')
+            message = (f'Epoch [{epoch + 1}/{num_epochs}], '
+                       f'Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, '
+                       f'Time: {epoch_time:.2f}s')
+            log_message(message)
+
+        if early_stopping.early_stop:
+            message = f"Early stopping triggered at epoch {epoch}"
+            log_message(message)
+            break
+
+    total_time = time.time() - training_start_time
+    avg_epoch_time = sum(epoch_times) / len(epoch_times)
+
+    mins = int(total_time // 60)
+    secs = int(total_time % 60)
+
+    final_stats = (f"\nTraining completed at {datetime.now()}\n"
+                   f"Total training time: {mins:02d}:{secs:02d}\n"
+                   f"Average epoch time: {avg_epoch_time:.2f} seconds\n"
+                   f"Number of epochs completed: {len(epoch_times)}")
+    log_message(final_stats)
 
     return train_losses, val_losses
 
@@ -175,6 +212,14 @@ def evaluate_model(model, test_loader, device=None):
     avg_loss = total_loss / len(test_loader)
     rmse = np.sqrt(avg_loss)
 
+    # Log the test results
+    with open('train_log.txt', 'a') as f:
+        f.write("\nTest Results:\n")
+        f.write("-" * 20 + "\n")
+        f.write(f"Test Loss: {avg_loss:.4f}\n")
+        f.write(f"Test RMSE: {rmse:.4f}\n")
+        f.write("-" * 20 + "\n")
+
     return {
         'test_loss': avg_loss,
         'rmse': rmse,
@@ -189,14 +234,16 @@ if __name__ == "__main__":
     twl_file = script_dir / 'processed_data/twls_array.npy'
 
     try:
+        # Load input features
         X = load_model_inputs(input_file)
-        print(f"Successfully loaded input data with shape: {X.shape}")
+        with open('train_log.txt', 'a') as f:
+            f.write(f"Loaded input data with shape: {X.shape}\n")
 
         # Load target values (TWL data)
         twl_data = np.load(twl_file)
-        # Transpose TWL data to have shape (n_simulations, n_grid_cells)
         twl_data = twl_data.T
-        print(f"Successfully loaded TWL data with shape: {twl_data.shape}")
+        with open('train_log.txt', 'a') as f:
+            f.write(f"Loaded TWL data with shape: {twl_data.shape}\n")
 
         # Prepare data
         train_loader, val_loader, test_loader, scaler = prepare_data(X, twl_data)
@@ -209,7 +256,8 @@ if __name__ == "__main__":
 
         # Evaluate model
         results = evaluate_model(model, test_loader)
-        print(f"Test RMSE: {results['rmse']:.4f}")
 
     except Exception as e:
-        print(f"Error during model training: {str(e)}")
+        with open('train_log.txt', 'a') as f:
+            f.write(f"\nError during model training: {str(e)}\n")
+        raise e
