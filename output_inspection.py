@@ -104,11 +104,9 @@ if __name__ == "__main__":
     file_path = "Z:\School\Capstone\Data\Result_map\sim_1\SFBD_map.nc"
 
     try:
-        # First, inspect the file structure
         print("Analyzing file structure...")
         inspect_grid_structure(file_path)
 
-        # Then extract data
         print("\nExtracting data...")
         results = extract_twl_data(file_path, simulation_id=0)
 

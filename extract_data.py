@@ -100,10 +100,10 @@ def process_all_simulations(input_dir, output_dir):
     # 1. Save the numpy array directly
     np.save(f"{output_dir}/twls_array.npy", all_twls)
 
-    # 2. Create and save wide format (more memory efficient than previous approach)
+    # 2. Create and save wide format
     sim_columns = [f'sim_{i}' for i in range(n_sims)]
     chunks = []
-    chunk_size = 10000  # Adjust based on available memory
+    chunk_size = 10000
 
     for i in range(0, n_cells, chunk_size):
         end_idx = min(i + chunk_size, n_cells)
@@ -123,7 +123,7 @@ def process_all_simulations(input_dir, output_dir):
         chunk.to_csv(f"{output_dir}/all_twls_wide.csv", mode=mode, header=header)
         first_chunk = False
 
-    # 3. Create and save long format efficiently
+    # 3. Create and save long format
     print("\nCreating long format file...")
     with open(f"{output_dir}/all_twls_long.csv", 'w', newline='') as f:
         f.write('grid_cell_id,TWL,simulation_id\n')
@@ -211,7 +211,7 @@ def save_ml_ready_data(combined_twls, output_dir):
     twls_wide.columns = ['grid_cell_id'] + [f'sim_{i}' for i in range(len(twls_wide.columns) - 1)]
     twls_wide.to_csv(f"{output_dir}/all_twls_wide.csv", index=False)
 
-    # 3. NumPy arrays (ready for deep learning frameworks)
+    # 3. NumPy arrays
     twls_array = twls_wide.iloc[:, 1:].values  # Exclude grid_cell_id
     np.save(f"{output_dir}/twls_array.npy", twls_array)
 
@@ -228,9 +228,8 @@ def save_ml_ready_data(combined_twls, output_dir):
 
 
 if __name__ == "__main__":
-    # Update paths for your directory structure
     input_dir = r"Z:\School\Capstone\Data\Result_map"
-    output_dir = r"Z:\School\Capstone\twl_model\processed_data"  # Adjust as needed
+    output_dir = r"Z:\School\Capstone\twl_model\processed_data"
 
     try:
         reference_coords, combined_twls = process_all_simulations(input_dir, output_dir)

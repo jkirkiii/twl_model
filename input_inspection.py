@@ -15,7 +15,6 @@ def read_matlab_file(filepath):
         ValueError: If the file is not a valid MATLAB file
         Exception: For other unexpected errors
     """
-    mat_contents = None
     try:
         if not Path(filepath).is_file():
             raise FileNotFoundError(f"File not found: {filepath}")
@@ -58,7 +57,6 @@ def read_matlab_file(filepath):
 
 
 if __name__ == "__main__":
-    # Example usage
     file_path = "Z:\School\Capstone\Data\Design_points_MDA.mat"
     try:
         read_matlab_file(file_path)

@@ -1,23 +1,72 @@
+import numpy as np
 import torch
-from torch.utils.data import DataLoader
-from sklearn.model_selection import train_test_split
+import sklearn.model_selection
+import sklearn.preprocessing
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from pathlib import Path
 from twl_model import TWLModel, WaterLevelDataset, EarlyStopping
+from torch import nn, optim
+from torch.utils.data import DataLoader
+
+
+def load_model_inputs(input_file='processed_data/twl_model_inputs.csv'):
+    """
+    Load and validate model input features from CSV.
+
+    Expected columns include tidal constituents (pM2, pK1, etc.),
+    wave characteristics (hs1-3, tp1-3, dir1-3), atmospheric (slp, wdu, wdv),
+    and river flows (qsac, qsan).
+
+    Parameters:
+        input_file (str): Path to input CSV file
+
+    Returns:
+        numpy.ndarray: Array of shape (750, 25) containing model inputs
+    """
+
+    try:
+        df = pd.read_csv(input_file)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Input file {input_file} not found")
+
+    expected_columns = [
+        'pM2', 'pK1', 'pO1', 'pS2', 'pN2', 'pP1', 'pSA', 'pQ1', 'pK2', 'pSSA',
+        'MMSLA',
+        'hs1', 'tp1', 'dir1',
+        'hs2', 'tp2', 'dir2',
+        'hs3', 'tp3', 'dir3',
+        'slp', 'wdu', 'wdv',
+        'qsac', 'qsan'
+    ]
+
+    if len(df) != 750:
+        raise ValueError(f"Expected 750 rows, but got {len(df)}")
+
+    missing_cols = set(expected_columns) - set(df.columns)
+    if missing_cols:
+        raise ValueError(f"Missing expected columns: {missing_cols}")
+
+    X = df[expected_columns].values
+
+    if X.shape != (750, 25):
+        raise ValueError(f"Expected shape (750, 25), but got {X.shape}")
+
+    return X
 
 
 def prepare_data(X, y, train_size=0.8, val_size=0.1, batch_size=32):
     """Prepare data for training with proper scaling and splitting"""
     # Split data into train, validation, and test sets
-    X_train, X_temp, y_train, y_temp = train_test_split(
+    X_train, X_temp, y_train, y_temp = sklearn.model_selection.train_test_split(
         X, y, train_size=train_size, random_state=42
     )
 
     val_size_adjusted = val_size / (1 - train_size)
-    X_val, X_test, y_val, y_test = train_test_split(
+    X_val, X_test, y_val, y_test = sklearn.model_selection.train_test_split(
         X_temp, y_temp, train_size=val_size_adjusted, random_state=42
     )
 
-    # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
@@ -53,7 +102,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
     val_losses = []
 
     for epoch in range(num_epochs):
-        # Training phase
+        # Train
         model.train()
         train_loss = 0.0
         for batch in train_loader:
@@ -68,7 +117,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
 
             train_loss += loss.item()
 
-        # Validation phase
+        # Validate
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -135,24 +184,32 @@ def evaluate_model(model, test_loader, device=None):
 
 
 if __name__ == "__main__":
-    # Example usage with dummy data
-    num_samples = 1000
-    input_size = 25
-    output_size = 1000
+    script_dir = Path(__file__).parent
+    input_file = script_dir / 'processed_data/twl_model_inputs.csv'
+    twl_file = script_dir / 'processed_data/twls_array.npy'
 
-    # Generate dummy data
-    X = np.random.randn(num_samples, input_size)
-    y = np.random.randn(num_samples, output_size)
+    try:
+        X = load_model_inputs(input_file)
+        print(f"Successfully loaded input data with shape: {X.shape}")
 
-    # Prepare data
-    train_loader, val_loader, test_loader, scaler = prepare_data(X, y)
+        # Load target values (TWL data)
+        twl_data = np.load(twl_file)
+        # Transpose TWL data to have shape (n_simulations, n_grid_cells)
+        twl_data = twl_data.T
+        print(f"Successfully loaded TWL data with shape: {twl_data.shape}")
 
-    # Initialize model
-    model = TWLModel(input_size=input_size, output_size=output_size)
+        # Prepare data
+        train_loader, val_loader, test_loader, scaler = prepare_data(X, twl_data)
 
-    # Train model
-    train_losses, val_losses = train_model(model, train_loader, val_loader)
+        # Initialize model
+        model = TWLModel(input_size=25, hidden_size=256, output_size=179269, dropout_rate=0.3)
 
-    # Evaluate model
-    results = evaluate_model(model, test_loader)
-    print(f"Test RMSE: {results['rmse']:.4f}")
+        # Train model
+        train_losses, val_losses = train_model(model, train_loader, val_loader)
+
+        # Evaluate model
+        results = evaluate_model(model, test_loader)
+        print(f"Test RMSE: {results['rmse']:.4f}")
+
+    except Exception as e:
+        print(f"Error during model training: {str(e)}")

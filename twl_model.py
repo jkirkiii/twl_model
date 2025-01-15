@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import Dataset
-import numpy as np
 
 
 class WaterLevelDataset(Dataset):
@@ -29,8 +27,8 @@ class WaterLevelDataset(Dataset):
 class TWLModel(nn.Module):
     """Neural Network for water level prediction
 
-    Based on Makarova's paper architecture with three dense layers,
-    batch normalization, and dropout for regularization.
+    Basic architecture with three dense layers, batch normalization,
+    and dropout for regularization.
     """
 
     def __init__(self, input_size=25, hidden_size=64, output_size=1000, dropout_rate=0.2):
