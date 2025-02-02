@@ -229,7 +229,7 @@ def save_ml_ready_data(combined_twls, output_dir):
 
 if __name__ == "__main__":
     input_dir = r"Z:\School\Capstone\Data\Result_map"
-    output_dir = r"Z:\School\Capstone\twl_model\processed_data"
+    output_dir = r"/processed_data"
 
     try:
         reference_coords, combined_twls = process_all_simulations(input_dir, output_dir)
