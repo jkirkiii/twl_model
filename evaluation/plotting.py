@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,6 +23,10 @@ def plot_cv_results(fold_results, log_file):
     plot_rmse_distribution(fold_results, run_id, output_dir)
     plot_rmse_heatmap(fold_results, grid_reference, run_id, output_dir)
 
+    # Save predictions with spatial information
+    pred_path = save_best_predictions(fold_results, grid_reference, run_id, output_dir)
+    log_message(f"\nSaved spatial predictions to: {pred_path}", log_file)
+
     # Save summary statistics
     rmse_values = [result['rmse'] for result in fold_results]
     stats = {
@@ -41,46 +45,59 @@ def plot_cv_results(fold_results, log_file):
 
 
 def plot_rmse_heatmap(fold_results, grid_reference, run_id, output_dir):
-    """Create heatmap of RMSE values across the spatial grid"""
-    n_cells = len(grid_reference)
-    squared_errors = np.zeros(n_cells)
-    counts = np.zeros(n_cells)
+    """Create heatmap of RMSE values across the spatial grid, showing only valid cells"""
+    # Get valid indices from the first fold result
+    valid_indices = fold_results[0]['valid_indices']
+
+    # Initialize arrays for only the valid cells
+    n_valid_cells = len(valid_indices)
+    squared_errors = np.zeros(n_valid_cells)
+    counts = np.zeros(n_valid_cells)
 
     for result in fold_results:
         val_indices = np.array(result['val_indices'])
-        predictions = result['predictions']  # Shape: (n_samples, n_cells)
+        predictions = result['predictions']
         targets = result['targets']
 
         # Calculate squared errors for each cell
         cell_errors = (predictions - targets) ** 2
 
-        # Accumulate errors across folds
-        for i, idx in enumerate(val_indices):
-            squared_errors += cell_errors[i]
-            counts += 1
+        # Accumulate errors for valid cells
+        squared_errors += cell_errors.sum(axis=0)
+        counts += np.ones(n_valid_cells) * len(val_indices)
 
-    # Calculate RMSE where we have predictions
-    mask = counts > 0
-    cell_rmse = np.zeros(n_cells)
-    cell_rmse[mask] = np.sqrt(squared_errors[mask] / counts[mask])
+    # Calculate RMSE for valid cells
+    cell_rmse = np.sqrt(squared_errors / counts)
 
+    # Create the plot
     plt.figure(figsize=(12, 8))
+
+    # Only plot valid cells
     scatter = plt.scatter(
-        grid_reference['FlowElem_xcc'],
-        grid_reference['FlowElem_ycc'],
+        grid_reference.loc[valid_indices, 'FlowElem_xcc'],
+        grid_reference.loc[valid_indices, 'FlowElem_ycc'],
         c=cell_rmse,
         cmap='viridis',
-        s=1,
-        alpha=0.6
+        s=2,  # Slightly larger points for better visibility
+        alpha=0.8
     )
 
     plt.colorbar(scatter, label='RMSE (m)')
-    plt.title('RMSE Distribution Across San Francisco Bay')
+    plt.title('RMSE Distribution')
     plt.xlabel('Easting (m)')
     plt.ylabel('Northing (m)')
 
-    plt.text(0.02, 0.98, f'Actual range: {cell_rmse.min():.3f}m - {cell_rmse.max():.3f}m',
-             transform=plt.gca().transAxes, fontsize=8)
+    # Add statistics annotation
+    stats_text = (
+        f'Number of cells: {n_valid_cells:,}\n'
+        f'RMSE range: {cell_rmse.min():.3f}m - {cell_rmse.max():.3f}m\n'
+        f'Mean RMSE: {cell_rmse.mean():.3f}m'
+    )
+    plt.text(0.02, 0.98, stats_text,
+             transform=plt.gca().transAxes,
+             fontsize=8,
+             verticalalignment='top',
+             bbox=dict(facecolor='white', alpha=0.8))
 
     plt.savefig(output_dir / f'rmse_heatmap_{run_id}.png', dpi=300, bbox_inches='tight')
     plt.close()
@@ -167,6 +184,35 @@ def plot_rmse_distribution(fold_results, run_id, output_dir):
         'min_rmse': float(np.min(rmse_values)),
         'max_rmse': float(np.max(rmse_values))
     }
+
+
+def save_best_predictions(fold_results, grid_reference, run_id, output_dir):
+    """Save predictions from best model with spatial information."""
+    # Find best fold
+    best_fold = min(fold_results, key=lambda x: x['metrics']['final_val_loss'])
+
+    # Get predictions and actual values
+    predictions = best_fold['predictions']
+    targets = best_fold['targets']
+    valid_indices = best_fold['valid_indices']
+
+    # Create DataFrame with spatial information for valid cells
+    results_df = pd.DataFrame({
+        'grid_cell_id': valid_indices,
+        'x_coordinate_m': grid_reference.loc[valid_indices, 'FlowElem_xcc'],
+        'y_coordinate_m': grid_reference.loc[valid_indices, 'FlowElem_ycc'],
+        'predicted_twl_mean_m': predictions.mean(axis=0),
+        'predicted_twl_std_m': predictions.std(axis=0),
+        'actual_twl_m': targets.mean(axis=0),
+        'absolute_error_m': np.abs(predictions.mean(axis=0) - targets.mean(axis=0)),
+        'n_samples': predictions.shape[0]
+    })
+
+    # Save to CSV in run directory
+    output_path = output_dir / f'spatial_predictions_{run_id}.csv'
+    results_df.to_csv(output_path, index=False)
+
+    return output_path
 
 
 def log_message(message, log_file):

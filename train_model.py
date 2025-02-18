@@ -46,10 +46,33 @@ def load_model_inputs(input_file='processed_data/twl_model_inputs.csv'):
     return X
 
 
+def filter_excluded_cells(twl_data, exclude_file='processed_data/cells_to_exclude4.csv'):
+    import pandas as pd
+    import numpy as np
+
+    excluded_cells = pd.read_csv(exclude_file)
+    cells_to_exclude = excluded_cells['grid_cell_id'].values
+
+    # Create mask for valid cells
+    valid_cells = np.ones(twl_data.shape[1], dtype=bool)
+    valid_cells[cells_to_exclude] = False
+    valid_indices = np.where(valid_cells)[0]
+
+    # Filter the data
+    filtered_data = twl_data[:, valid_cells]
+
+    print(f"Removed {len(cells_to_exclude)} cells from training data")
+    print(f"Original shape: {twl_data.shape}")
+    print(f"Filtered shape: {filtered_data.shape}")
+
+    return filtered_data, valid_indices
+
+
 if __name__ == "__main__":
     script_dir = Path(__file__).parent
     input_file = script_dir / 'processed_data/twl_model_inputs.csv'
     twl_file = script_dir / 'processed_data/twls_array.npy'
+    exclude_file = script_dir / 'processed_data/cells_to_exclude4.csv'
     log_file = 'train_log.txt'
 
     try:
@@ -58,27 +81,34 @@ if __name__ == "__main__":
         with open(log_file, 'a') as f:
             f.write(f"Loaded input data with shape: {X.shape}\n")
 
-        # Load target values (TWL data)
+        # Load and filter target values
         twl_data = np.load(twl_file)
         twl_data = twl_data.T
+        filtered_twl_data, valid_indices = filter_excluded_cells(twl_data, exclude_file)
+
         with open(log_file, 'a') as f:
-            f.write(f"Loaded TWL data with shape: {twl_data.shape}\n")
+            f.write(f"Loaded and filtered TWL data\n")
+            f.write(f"Original shape: {twl_data.shape}\n")
+            f.write(f"Filtered shape: {filtered_twl_data.shape}\n")
 
         model_params = {
             'input_size': 25,
-            'hidden_sizes': [256, 256, 256],
-            'output_size': 179269,
+            'hidden_sizes': [128, 256, 512, 1024],
+            'output_size': filtered_twl_data.shape[1],
             'dropout_rate': 0.3
         }
 
         # Perform cross-validation
         fold_results, cv_stats = cross_validate_model(
             X=X,
-            y=twl_data,
+            y=filtered_twl_data,
             model_class=TWLModel,
             n_splits=5,
             **model_params
         )
+
+        for result in fold_results:
+            result['valid_indices'] = valid_indices
 
         plot_cv_results(fold_results, log_file)
 

@@ -14,7 +14,7 @@ from evaluation.plotting import log_message
 
 
 def train_model(model, train_loader, val_loader, num_epochs=1500,
-                learning_rate=0.01, device=None):
+                learning_rate=0.001, device=None):
     """Train the neural network with early stopping and learning rate scheduling"""
 
     log_file = 'train_log.txt'
@@ -154,7 +154,7 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
         f.write("-" * 80 + "\n")
 
     # Initialize K-Fold cross validator
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=31)
     fold_results = []
     rmse_scores = []
 
@@ -190,7 +190,7 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
         )
 
         # Train the model for this fold
-        train_results = train_model(model, train_loader, val_loader, num_epochs=10)
+        train_results = train_model(model, train_loader, val_loader, num_epochs=1000)
         train_losses = train_results['train_losses']
         val_losses = train_results['val_losses']
 
