@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import pandas as pd
 from pathlib import Path
-from models.twl_model import TWLModel
+from models.twl_model import TWLModel, TWLResNet, TWLResNetFeatModel
 from cross_validation import cross_validate_model
 from evaluation.plotting import plot_cv_results
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         model_params = {
             'input_size': 25,
-            'hidden_sizes': [128, 256, 512, 1024],
+            'hidden_sizes': [256, 512, 768, 512, 256],
             'output_size': filtered_twl_data.shape[1],
             'dropout_rate': 0.3
         }
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         fold_results, cv_stats = cross_validate_model(
             X=X,
             y=filtered_twl_data,
-            model_class=TWLModel,
+            model_class=TWLResNet,
             n_splits=5,
             **model_params
         )

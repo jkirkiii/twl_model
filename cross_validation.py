@@ -190,7 +190,7 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
         )
 
         # Train the model for this fold
-        train_results = train_model(model, train_loader, val_loader, num_epochs=1000)
+        train_results = train_model(model, train_loader, val_loader, num_epochs=1500)
         train_losses = train_results['train_losses']
         val_losses = train_results['val_losses']
 

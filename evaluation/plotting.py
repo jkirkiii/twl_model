@@ -195,6 +195,7 @@ def save_best_predictions(fold_results, grid_reference, run_id, output_dir):
     predictions = best_fold['predictions']
     targets = best_fold['targets']
     valid_indices = best_fold['valid_indices']
+    cell_rmse = np.sqrt(np.mean((predictions - targets) ** 2, axis=0))
 
     # Create DataFrame with spatial information for valid cells
     results_df = pd.DataFrame({
@@ -205,6 +206,7 @@ def save_best_predictions(fold_results, grid_reference, run_id, output_dir):
         'predicted_twl_std_m': predictions.std(axis=0),
         'actual_twl_m': targets.mean(axis=0),
         'absolute_error_m': np.abs(predictions.mean(axis=0) - targets.mean(axis=0)),
+        'rmse_m': cell_rmse,
         'n_samples': predictions.shape[0]
     })
 
