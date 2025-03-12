@@ -91,18 +91,29 @@ if __name__ == "__main__":
             f.write(f"Original shape: {twl_data.shape}\n")
             f.write(f"Filtered shape: {filtered_twl_data.shape}\n")
 
+        model_class = TWLResNetFeatModel
         model_params = {
             'input_size': 25,
-            'hidden_sizes': [256, 512, 768, 512, 256],
+            'hidden_sizes': None,
             'output_size': filtered_twl_data.shape[1],
+            'num_res_blocks': 5,
             'dropout_rate': 0.3
         }
+
+        temp_model = model_class(**model_params)
+        model_params_full = temp_model.get_params()
+
+        with open(log_file, 'a') as f:
+            f.write("\nModel Parameters:\n")
+            for key, value in model_params_full.items():
+                f.write(f"  {key}: {value}\n")
+            f.write("-" * 50 + "\n")
 
         # Perform cross-validation
         fold_results, cv_stats = cross_validate_model(
             X=X,
             y=filtered_twl_data,
-            model_class=TWLResNet,
+            model_class=model_class,
             n_splits=5,
             **model_params
         )
@@ -110,7 +121,8 @@ if __name__ == "__main__":
         for result in fold_results:
             result['valid_indices'] = valid_indices
 
-        plot_cv_results(fold_results, log_file)
+        # plot_cv_results(fold_results, log_file)
+        plot_cv_results(fold_results, log_file, observation_matches_file='processed_data/observation_points_reference.csv')
 
         # Select best model from cross-validation
         best_fold = min(fold_results, key=lambda x: x['metrics']['final_val_loss'])

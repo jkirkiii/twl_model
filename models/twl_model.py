@@ -91,7 +91,7 @@ class ResidualBlock(nn.Module):
 
 class TWLResNet(nn.Module):
     def __init__(self, input_size=25, hidden_sizes=None, output_size=165590,
-                 dropout_rate=0.3, num_res_blocks=3):
+                 dropout_rate=0.3, num_res_blocks=5):
         super(TWLResNet, self).__init__()
 
         if hidden_sizes is None:
@@ -142,7 +142,7 @@ class TWLResNet(nn.Module):
 
 class TWLResNetFeatModel(nn.Module):
     def __init__(self, input_size=25, hidden_sizes=None, output_size=165590,
-                 dropout_rate=0.3, num_res_blocks=4):
+                 dropout_rate=0.3, num_res_blocks=5):
         super(TWLResNetFeatModel, self).__init__()
 
         if hidden_sizes is None:
