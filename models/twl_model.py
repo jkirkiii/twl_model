@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import numpy as np
 
 class TWLModel(nn.Module):
     """Neural Network for water level prediction with configurable layer sizes"""
@@ -255,6 +256,140 @@ class TWLResNetFeatModel(nn.Module):
             'output_size': self.output_size,
             'dropout_rate': self.dropout_rate,
             'num_res_blocks': self.num_res_blocks
+        }
+
+
+class SpatiallyAwareTWLModel(nn.Module):
+    """
+    <<WIP>>
+    Spatially-aware model for predicting water levels across a grid
+    Explicitly models the interaction between environmental conditions and spatial location
+    """
+
+    def __init__(self, input_size=25, hidden_sizes=None, output_size=165590,
+                 spatial_embedding_dim=16, dropout_rate=0.3):
+        super(SpatiallyAwareTWLModel, self).__init__()
+
+        if hidden_sizes is None:
+            hidden_sizes = [256, 128, 64]
+
+        self.input_size = input_size
+        self.hidden_sizes = hidden_sizes
+        self.output_size = output_size
+        self.dropout_rate = dropout_rate
+        self.spatial_embedding_dim = spatial_embedding_dim
+
+        # Environmental feature encoder
+        self.env_encoder = nn.Sequential(
+            nn.Linear(input_size, hidden_sizes[0]),
+            nn.BatchNorm1d(hidden_sizes[0]),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+            nn.BatchNorm1d(hidden_sizes[1]),
+            nn.ReLU()
+        )
+
+        # Register buffer for spatial coordinates (will be filled later)
+        self.register_buffer('spatial_coords', torch.zeros(output_size, 2))
+        self.register_buffer('bed_levels', torch.zeros(output_size, 1))
+
+        # Spatial feature encoder
+        self.spatial_encoder = nn.Sequential(
+            nn.Linear(3, spatial_embedding_dim),  # x, y, bed_level
+            nn.ReLU(),
+            nn.Linear(spatial_embedding_dim, spatial_embedding_dim),
+            nn.ReLU()
+        )
+
+        # Decoder for both environmental and spatial features
+        combined_dim = hidden_sizes[1] + spatial_embedding_dim
+        self.decoder = nn.Sequential(
+            nn.Linear(combined_dim, hidden_sizes[2]),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(hidden_sizes[2], 1)
+        )
+
+    # def forward(self, x):
+    #     batch_size = x.shape[0]
+    #
+    #     env_features = self.env_encoder(x)
+    #
+    #     spatial_input = torch.cat([self.spatial_coords, self.bed_levels], dim=1)
+    #
+    #     spatial_features = self.spatial_encoder(spatial_input)
+    #
+    #     env_features = env_features.unsqueeze(1).expand(-1, self.output_size, -1)
+    #     spatial_features = spatial_features.unsqueeze(0).expand(batch_size, -1, -1)
+    #
+    #     combined = torch.cat([env_features, spatial_features], dim=2)
+    #     output = self.decoder(combined).squeeze(-1)
+    #
+    #     return output
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+        env_features = self.env_encoder(x)
+
+        chunk_size = 5000
+        outputs = []
+
+        for i in range(0, self.output_size, chunk_size):
+            end_idx = min(i + chunk_size, self.output_size)
+            chunk_coords = self.spatial_coords[i:end_idx]
+            chunk_bed = self.bed_levels[i:end_idx]
+
+            spatial_input = torch.cat([chunk_coords, chunk_bed], dim=1)
+            spatial_features = self.spatial_encoder(spatial_input)
+
+            env_expanded = env_features.unsqueeze(1).expand(-1, end_idx - i, -1)
+            spatial_expanded = spatial_features.unsqueeze(0).expand(batch_size, -1, -1)
+
+            combined = torch.cat([env_expanded, spatial_expanded], dim=2)
+            chunk_output = self.decoder(combined).squeeze(-1)
+            outputs.append(chunk_output)
+
+        return torch.cat(outputs, dim=1)
+
+    def load_spatial_data(self, grid_reference, valid_indices):
+        # Extract coordinates
+        x_coords = grid_reference.loc[valid_indices, 'x_km'].values
+        y_coords = grid_reference.loc[valid_indices, 'y_km'].values
+        bed_levels = grid_reference.loc[valid_indices, 'bed_level'].values
+
+        # Normalize
+        x_norm = (x_coords - x_coords.min()) / (x_coords.max() - x_coords.min())
+        y_norm = (y_coords - y_coords.min()) / (y_coords.max() - y_coords.min())
+
+        # Normalize
+        bed_min, bed_max = bed_levels.min(), bed_levels.max()
+        bed_norm = (bed_levels - bed_min) / (bed_max - bed_min)
+
+        self.x_range = (x_coords.min(), x_coords.max())
+        self.y_range = (y_coords.min(), y_coords.max())
+        self.bed_range = (bed_min, bed_max)
+
+        # Create coordinate tensor
+        coords = torch.tensor(np.stack([x_norm, y_norm], axis=1), dtype=torch.float32)
+        self.spatial_coords.copy_(coords)
+
+        # Create bed level tensor
+        bed_tensor = torch.tensor(bed_norm.reshape(-1, 1), dtype=torch.float32)
+        self.bed_levels.copy_(bed_tensor)
+
+        self.output_size = len(valid_indices)
+
+        print(f"Loaded spatial data for {self.output_size} valid grid cells")
+
+    def get_params(self):
+        """Return model parameters for saving/loading"""
+        return {
+            'input_size': self.input_size,
+            'hidden_sizes': self.hidden_sizes,
+            'output_size': self.output_size,
+            'spatial_embedding_dim': self.spatial_embedding_dim,
+            'dropout_rate': self.dropout_rate
         }
 
 

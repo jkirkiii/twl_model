@@ -29,8 +29,12 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=200, min_lr=1e-6)
-    early_stopping = EarlyStopping()
+
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.5, patience=50, min_lr=1e-5
+    )
+
+    early_stopping = EarlyStopping(patience=150)
 
     train_losses = []
     val_losses = []
@@ -130,7 +134,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1500,
     }
 
 
-def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
+def cross_validate_model(X, y, model_class, grid_reference=None, valid_indices=None, n_splits=5, **model_params):
     """
     Perform k-fold cross validation of the TWL model with detailed logging.
     """
@@ -154,7 +158,7 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
         f.write("-" * 80 + "\n")
 
     # Initialize K-Fold cross validator
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=31)
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=104)
     fold_results = []
     rmse_scores = []
 
@@ -171,6 +175,11 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
 
         # Initialize model and scaler for this fold
         model = model_class(**model_params)
+
+        # Load spatial data if using a spatial model
+        if hasattr(model, 'load_spatial_data') and grid_reference is not None and valid_indices is not None:
+            model.load_spatial_data(grid_reference, valid_indices)
+
         scaler = StandardScaler()
 
         # Scale the features
@@ -179,13 +188,13 @@ def cross_validate_model(X, y, model_class, n_splits=5, **model_params):
 
         train_loader = DataLoader(
             WaterLevelDataset(X_train_fold, y[train_idx]),
-            batch_size=32,
+            batch_size=8,
             shuffle=True
         )
 
         val_loader = DataLoader(
             WaterLevelDataset(X_val_fold, y[val_idx]),
-            batch_size=32,
+            batch_size=8,
             shuffle=False
         )
 

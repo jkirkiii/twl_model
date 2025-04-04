@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import pandas as pd
 from pathlib import Path
-from models.twl_model import TWLModel, TWLResNet, TWLResNetFeatModel
+from models.twl_model import TWLModel, TWLResNet, TWLResNetFeatModel, SpatiallyAwareTWLModel
 from cross_validation import cross_validate_model
 from evaluation.plotting import plot_cv_results
 
@@ -73,6 +73,7 @@ if __name__ == "__main__":
     input_file = script_dir / 'processed_data/twl_model_inputs.csv'
     twl_file = script_dir / 'processed_data/twls_array.npy'
     exclude_file = script_dir / 'processed_data/cells_to_exclude4.csv'
+    grid_reference_file = script_dir / 'processed_data/grid_reference.csv'
     log_file = 'train_log.txt'
 
     try:
@@ -86,17 +87,19 @@ if __name__ == "__main__":
         twl_data = twl_data.T
         filtered_twl_data, valid_indices = filter_excluded_cells(twl_data, exclude_file)
 
+        grid_reference = pd.read_csv(grid_reference_file)
+
         with open(log_file, 'a') as f:
             f.write(f"Loaded and filtered TWL data\n")
             f.write(f"Original shape: {twl_data.shape}\n")
             f.write(f"Filtered shape: {filtered_twl_data.shape}\n")
 
-        model_class = TWLResNetFeatModel
+        model_class = SpatiallyAwareTWLModel
         model_params = {
             'input_size': 25,
-            'hidden_sizes': None,
+            'hidden_sizes': [256, 128, 128, 64],
             'output_size': filtered_twl_data.shape[1],
-            'num_res_blocks': 5,
+            'spatial_embedding_dim': 16,
             'dropout_rate': 0.3
         }
 
@@ -113,7 +116,9 @@ if __name__ == "__main__":
         fold_results, cv_stats = cross_validate_model(
             X=X,
             y=filtered_twl_data,
-            model_class=model_class,
+            model_class=SpatiallyAwareTWLModel,
+            grid_reference=grid_reference,
+            valid_indices=valid_indices,
             n_splits=5,
             **model_params
         )
