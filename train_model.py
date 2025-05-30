@@ -99,7 +99,7 @@ if __name__ == "__main__":
             'input_size': 25,
             'hidden_sizes': [256, 128, 128, 64],
             'output_size': filtered_twl_data.shape[1],
-            'spatial_embedding_dim': 16,
+            'spatial_embedding_dim': 8,
             'dropout_rate': 0.3
         }
 
